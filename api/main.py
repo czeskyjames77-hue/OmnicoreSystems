@@ -1,10 +1,45 @@
-import sqlite3
+import os
 from fastapi import FastAPI, Query as FastAPIQuery
 from fastapi.middleware.cors import CORSMiddleware
 from serpapi import GoogleSearch
 from pydantic import BaseModel
 from typing import List
 import uvicorn
+
+# Neu für Supabase/PostgreSQL
+from sqlalchemy import create_engine, Column, String, Integer, Float
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+# --- DATABASE SETUP (Supabase) ---
+# DATABASE_URL muss in Vercel als Environment Variable hinterlegt werden
+DATABASE_URL = os.environ.get("DATABASE_URL")
+# Falls DATABASE_URL mit postgres:// beginnt, muss es für SQLAlchemy oft in postgresql:// geändert werden
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+# Tabellen-Definitionen
+class CompanyDB(Base):
+    __tablename__ = "companies"
+    data_id = Column(String, primary_key=True)
+    title = Column(String)
+    address = Column(String)
+    rating = Column(Float)
+
+class ReviewDB(Base):
+    __tablename__ = "reviews"
+    id = Column(String, primary_key=True)
+    data_id = Column(String)
+    author = Column(String)
+    rating = Column(Integer)
+    text = Column(String)
+
+# Erstellt die Tabellen in Supabase, falls sie noch nicht existieren
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -16,17 +51,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-API_KEY = "715d6e97d27a5646cc09f12dd817202e558db7572beb4fdde55ceb3ee25a427f"
-
-def init_db():
-    conn = sqlite3.connect("omnicore.db")
-    c = conn.cursor()
-    c.execute('CREATE TABLE IF NOT EXISTS companies (data_id TEXT PRIMARY KEY, title TEXT, address TEXT, rating REAL)')
-    c.execute('CREATE TABLE IF NOT EXISTS reviews (id TEXT PRIMARY KEY, data_id TEXT, author TEXT, rating INTEGER, text TEXT)')
-    conn.commit()
-    conn.close()
-
-init_db()
+# API Key sicher aus Environment laden
+API_KEY = os.environ.get("SERPAPI_KEY", "715d6e97d27a5646cc09f12dd817202e558db7572beb4fdde55ceb3ee25a427f")
 
 class CheckoutRequest(BaseModel):
     reviews: List[dict]
@@ -36,47 +62,30 @@ class CheckoutRequest(BaseModel):
 def analyze_review(rating: int, text: str):
     """
     Die Omnicore AI-Logik zur Bewertung von Löschchancen.
-    Analysiert Texte auf juristische Angriffspunkte nach Google-Richtlinien.
     """
     text_lower = text.lower().strip()
     
-    # 1. Kategorie: Der "Ghost"-Eintrag (1-3 Sterne ohne Text)
+    # 1. Kategorie: Der "Ghost"-Eintrag
     if rating <= 3 and len(text_lower) == 0:
-        return {
-            "violation": "Verstoß gegen Erfahrungsbericht-Pflicht (Fake-Verdacht)",
-            "confidence": 98
-        }
+        return {"violation": "Verstoß gegen Erfahrungsbericht-Pflicht (Fake-Verdacht)", "confidence": 98}
 
-    # 2. Kategorie: Die Beleidigung / Schmähkritik
+    # 2. Kategorie: Die Beleidigung
     insults = ["unverschämt", "frech", "arrogant", "unfähig", "dumm", "idiot", "sauladen", "unfreundlich", "unprofessionell"]
     if any(word in text_lower for word in insults):
-        return {
-            "violation": "Unzulässige Schmähkritik & Verletzung der Persönlichkeitsrechte",
-            "confidence": 95
-        }
+        return {"violation": "Unzulässige Schmähkritik & Verletzung der Persönlichkeitsrechte", "confidence": 95}
 
-    # 3. Kategorie: Der Verleumder (Unbewiesene Tatsachenbehauptungen)
+    # 3. Kategorie: Der Verleumder
     claims = ["betrug", "abzocke", "lüge", "gestohlen", "betrüger", "abgezockt", "abzocker", "abzocken"]
     if any(word in text_lower for word in claims):
-        return {
-            "violation": "Unbewiesene Tatsachenbehauptung (Beweislast beim Verfasser)",
-            "confidence": 88
-        }
+        return {"violation": "Unbewiesene Tatsachenbehauptung (Beweislast beim Verfasser)", "confidence": 88}
 
-    # 4. Kategorie: Grauzone / Geringe Relevanz
+    # 4. Kategorie: Grauzone
     if rating <= 3:
         if len(text_lower) < 50:
-            return {
-                "violation": "Inhaltlicher Widerspruch zur Google-Relevanz-Richtlinie",
-                "confidence": 75
-            }
+            return {"violation": "Inhaltlicher Widerspruch zur Google-Relevanz-Richtlinie", "confidence": 75}
         else:
-            return {
-                "violation": "Prüfungsrelevanter Diffamierungsverdacht",
-                "confidence": 65
-            }
+            return {"violation": "Prüfungsrelevanter Diffamierungsverdacht", "confidence": 65}
 
-    # Sicherer Bereich (4-5 Sterne)
     return {"violation": None, "confidence": 100}
 
 @app.get("/api/search")
@@ -104,7 +113,6 @@ async def get_reviews(data_id: str, name: str = ""):
     all_formatted_reviews = []
     next_page_token = None
     
-    # Omnicore Deep Scan: Wir laden bis zu 3 Seiten (ca. 30 Rezensionen)
     for page in range(0, 3):
         params = {
             "engine": "google_maps_reviews",
@@ -119,14 +127,10 @@ async def get_reviews(data_id: str, name: str = ""):
         raw_reviews = results.get("reviews", [])
         
         for r in raw_reviews:
-            # Klarnamen-Extraktion
             user_data = r.get("user", {})
             author_name = user_data.get("name") or r.get("author") or "Unbekannter Nutzer"
-            
             rating = r.get("rating", 0)
             snippet = r.get("snippet") or r.get("text") or ""
-            
-            # Dynamische AI-Analyse aufrufen
             analysis = analyze_review(rating, snippet)
             
             review_obj = {
@@ -137,7 +141,7 @@ async def get_reviews(data_id: str, name: str = ""):
                 "date": r.get("date", "Vor kurzem"),
                 "confidence": analysis["confidence"],
                 "violation": analysis["violation"],
-                "secure": rating > 3 # 4 & 5 Sterne sind sicher, 1-3 bekommen den Lösch-Button
+                "secure": rating > 3
             }
             all_formatted_reviews.append(review_obj)
         
@@ -145,29 +149,34 @@ async def get_reviews(data_id: str, name: str = ""):
         if not next_page_token:
             break
 
-    # SORTIERUNG: Die schlechtesten Bewertungen zuerst
     sorted_reviews = sorted(all_formatted_reviews, key=lambda x: x['rating'])
 
-    # Datenbank-Update
-    conn = sqlite3.connect("omnicore.db")
-    c = conn.cursor()
-    for rev in sorted_reviews:
-        c.execute("INSERT OR REPLACE INTO reviews VALUES (?,?,?,?,?)", 
-                  (rev["id"], data_id, rev["author"], rev["rating"], rev["text"]))
-    conn.commit()
-    conn.close()
+    # DB Update (Supabase)
+    db = SessionLocal()
+    try:
+        for rev in sorted_reviews:
+            db_review = ReviewDB(
+                id=rev["id"],
+                data_id=data_id,
+                author=rev["author"],
+                rating=rev["rating"],
+                text=rev["text"]
+            )
+            db.merge(db_review) # merge funktioniert wie "INSERT OR REPLACE"
+        db.commit()
+    except Exception as e:
+        print(f"DB Error: {e}")
+        db.rollback()
+    finally:
+        db.close()
 
     return sorted_reviews
 
 @app.post("/api/create-checkout-session")
 async def checkout(req: CheckoutRequest):
     print(f"Checkout-Auftrag von: {req.customerDetails.get('email')}")
-    print(f"Firma: {req.company.get('name')}")
-    print(f"Anzahl Löschungen: {len(req.reviews)}")
-    # Später Stripe-Integration hier
     return {"url": "https://buy.stripe.com/demo_checkout_link"}
 
 if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 8000)) # Liest den Port vom Cloud-Anbieter
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
