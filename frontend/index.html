@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OMNICORE SYSTEME | AI Audit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#e11d48',
+              slate: { 950: '#0b0c10' }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Zusätzliche Design-Feinheiten */
+      body { background-color: #0b0c10; color: white; margin: 0; }
+      .glow-red { box-shadow: 0 0 20px rgba(225, 29, 72, 0.4); }
+      ::-webkit-scrollbar { width: 5px; }
+      ::-webkit-scrollbar-thumb { background: #e11d48; border-radius: 10px; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

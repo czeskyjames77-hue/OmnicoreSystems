@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  background-color: #0b0c10; /* Der tiefe Omnicore-Hintergrund */
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Der "Glow"-Effekt für die Buttons */
+.glow-red {
+  box-shadow: 0 0 20px rgba(225, 29, 72, 0.4);
+}
+
+.glow-red:hover {
+  box-shadow: 0 0 35px rgba(225, 29, 72, 0.6);
+}
+
+/* Custom Scrollbar für das professionelle Dashboard-Feeling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(225, 29, 72, 0.3);
+  border-radius: 10px;
+}
