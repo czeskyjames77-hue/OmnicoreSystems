@@ -6,19 +6,23 @@ from pydantic import BaseModel
 from typing import List
 import uvicorn
 
-# Neu für Supabase/PostgreSQL
+# Datenbank-Imports
 from sqlalchemy import create_engine, Column, String, Integer, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # --- DATABASE SETUP (Supabase) ---
-# DATABASE_URL muss in Vercel als Environment Variable hinterlegt werden
 DATABASE_URL = os.environ.get("DATABASE_URL")
-# Falls DATABASE_URL mit postgres:// beginnt, muss es für SQLAlchemy oft in postgresql:// geändert werden
+
+# Wichtig für SQLAlchemy & Supabase: postgres:// zu postgresql:// konvertieren
 if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-engine = create_engine(DATABASE_URL)
+# Engine mit SSL-Support für Cloud-Verbindungen
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"sslmode": "require"} if DATABASE_URL and "supabase" in DATABASE_URL else {}
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -38,11 +42,10 @@ class ReviewDB(Base):
     rating = Column(Integer)
     text = Column(String)
 
-# Erstellt die Tabellen in Supabase, falls sie noch nicht existieren
-Base.metadata.create_all(bind=engine)
-
+# FastAPI Instanz
 app = FastAPI()
 
+# CORS Einstellungen
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -59,11 +62,19 @@ class CheckoutRequest(BaseModel):
     company: dict
     customerDetails: dict
 
+# Hilfsfunktion zur Tabellenerstellung beim ersten Start
+@app.on_event("startup")
+def startup_event():
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"Startup DB Error: {e}")
+
 def analyze_review(rating: int, text: str):
     """
     Die Omnicore AI-Logik zur Bewertung von Löschchancen.
     """
-    text_lower = text.lower().strip()
+    text_lower = text.lower().strip() if text else ""
     
     # 1. Kategorie: Der "Ghost"-Eintrag
     if rating <= 3 and len(text_lower) == 0:
@@ -87,6 +98,10 @@ def analyze_review(rating: int, text: str):
             return {"violation": "Prüfungsrelevanter Diffamierungsverdacht", "confidence": 65}
 
     return {"violation": None, "confidence": 100}
+
+@app.get("/api/health")
+async def health():
+    return {"status": "Omnicore Systeme Online", "db_configured": bool(DATABASE_URL)}
 
 @app.get("/api/search")
 async def search(name: str = FastAPIQuery(...), address: str = FastAPIQuery("")):
@@ -162,7 +177,7 @@ async def get_reviews(data_id: str, name: str = ""):
                 rating=rev["rating"],
                 text=rev["text"]
             )
-            db.merge(db_review) # merge funktioniert wie "INSERT OR REPLACE"
+            db.merge(db_review) 
         db.commit()
     except Exception as e:
         print(f"DB Error: {e}")
