@@ -1,5 +1,14 @@
 {
-  "version": 2,
+  "builds": [
+    {
+      "src": "api/main.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build"
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -9,10 +18,5 @@
       "source": "/(.*)",
       "destination": "/"
     }
-  ],
-  "functions": {
-    "api/*.py": {
-      "runtime": "vercel-python@4.4.4"
-    }
-  }
+  ]
 }
