@@ -1,144 +1,136 @@
 import React, { useState } from 'react';
+import { Search, Shield, Zap, BarChart3, ChevronRight, Globe, Lock, Cpu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, MapPin, Search, Cpu, Globe, CheckCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
-// WICHTIG: Stelle sicher, dass MOCK_RECENT_SEARCHES in deiner api.ts exportiert wird oder definiere es hier lokal
-import { api } from '../api';
 
-const MOCK_RECENT_SEARCHES = [
-  { name: "Restaurant XYZ", location: "München, DE", status: "4 Verstöße", color: "text-primary" },
-  { name: "Kanzlei Schmidt", location: "Berlin, DE", status: "Profil optimiert", color: "text-emerald-500" },
-  { name: "Boutique Hotel Alpha", location: "Wien, AT", status: "Analyse läuft...", color: "text-blue-500" }
-];
-
-const SearchPage: React.FC = () => {
-  const [companyName, setCompanyName] = useState('');
-  const [location, setLocation] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
+const SearchPage = () => {
+  const [url, setUrl] = useState('');
   const navigate = useNavigate();
 
-  const handleSearch = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!companyName || !location) return;
-
-    setIsSearching(true);
-    try {
-      // 1. ECHTER API CALL an dein Python-Backend
-      const response = await api.get('/api/search', { 
-        params: { name: companyName, address: location } 
-      });
-      
-      if (response.data && !response.data.error) {
-        // 2. NAVIGATION: Wir übergeben das ECHTE Ergebnis vom Backend an die AuditPage
-        navigate('/audit', { 
-          state: { 
-            company: response.data // Enthält title, address, data_id etc.
-          } 
-        });
-      } else {
-        alert(response.data.error || "Firma konnte nicht gefunden werden.");
-      }
-    } catch (error) {
-      console.error("Omnicore Search failed", error);
-      alert("Verbindung zum Omnicore-Backend unterbrochen.");
-    } finally {
-      setIsSearching(false);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (url) {
+      navigate(`/audit?url=${encodeURIComponent(url)}`);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white selection:bg-red-500/30">
-      {/* Navbar */}
-      <nav className="border-b border-white/5 px-8 py-6 flex justify-between items-center bg-[#0f172a]/20 backdrop-blur-md sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="bg-[#e11d48] p-2 rounded-xl shadow-lg shadow-red-500/20">
-            <Shield className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-[#0b0c10] text-white selection:bg-[#e11d48]/30">
+      {/* Background Decor */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#e11d48]/10 blur-[120px] rounded-full"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#e11d48]/5 blur-[120px] rounded-full"></div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="relative z-10 border-b border-white/5 bg-[#0b0c10]/50 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3 group cursor-pointer" onClick={() => navigate('/')}>
+            <div className="w-10 h-10 bg-gradient-to-br from-[#e11d48] to-[#9f1239] rounded-xl flex items-center justify-center shadow-lg shadow-[#e11d48]/20 group-hover:scale-110 transition-transform">
+              <Shield className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-xl font-bold tracking-tighter uppercase italic">
+              Omnicore <span className="text-[#e11d48]">Systeme</span>
+            </span>
           </div>
-          <span className="text-xl font-black tracking-tighter uppercase">
-            OMNICORE <span className="text-[#e11d48]">SYSTEME</span>
-          </span>
+          
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
+            <a href="#features" className="hover:text-white transition-colors">Technologie</a>
+            <a href="#security" className="hover:text-white transition-colors">Sicherheit</a>
+            <a href="#enterprise" className="hover:text-white transition-colors">Enterprise</a>
+          </div>
+
+          <button 
+            onClick={() => navigate('/portal/login')} 
+            className="px-6 py-2.5 rounded-full border border-white/10 hover:border-[#e11d48]/50 hover:bg-[#e11d48]/5 transition-all text-sm font-semibold"
+          >
+            Portal Login
+          </button>
         </div>
-        <div className="hidden md:flex gap-8 text-sm font-bold uppercase tracking-widest text-slate-400">
-          <span className="cursor-default">KI-Technologie</span>
-          <span className="cursor-default">Lösungen</span>
-          <span className="cursor-default">Support</span>
-        </div>
-        <button className="bg-slate-800 px-6 py-2 rounded-lg text-sm font-bold border border-white/10 hover:bg-slate-700 transition-all">
-          Login
-        </button>
       </nav>
 
       {/* Hero Section */}
-      <main className="max-w-6xl mx-auto px-6 pt-24 pb-32 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-tight mb-8 uppercase">
-            Reputation <br />
-            <span className="text-[#e11d48] italic">neu definiert</span>
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-20">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#e11d48]/10 border border-[#e11d48]/20 text-[#e11d48] text-xs font-bold uppercase tracking-widest mb-6">
+            <Zap className="w-3 h-3" /> Next-Gen AI Compliance
+          </div>
+          <h1 className="text-6xl md:text-7xl font-bold mb-8 tracking-tight leading-[1.1]">
+            Deep-Scan Audit für <span className="text-[#e11d48]">KI-Systeme.</span>
           </h1>
-          <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-16 leading-relaxed">
-            Nutzen Sie modernste KI-Algorithmen von Omnicore Systeme, um geschäftsschädigende 
-            Bewertungen zu identifizieren und rechtssicher zu entfernen.
+          <p className="text-lg text-gray-400 mb-12 leading-relaxed">
+            Analysieren Sie Ihre Web-Infrastruktur auf KI-Risiken, Compliance-Lücken und 
+            Sicherheits-Vulnerabilitäten in Echtzeit.
           </p>
-        </motion.div>
 
-        {/* Search Widget */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="bg-slate-900/40 border border-white/10 p-2 md:p-4 rounded-[2.5rem] shadow-2xl backdrop-blur-2xl max-w-4xl mx-auto"
-        >
-          <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-3">
-            <div className="flex-1 relative">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
+          <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto group">
+            <div className="absolute inset-0 bg-[#e11d48]/20 blur-2xl group-focus-within:bg-[#e11d48]/30 transition-all rounded-full"></div>
+            <div className="relative flex items-center p-2 bg-white/5 border border-white/10 rounded-full backdrop-blur-2xl focus-within:border-[#e11d48]/50 transition-all">
+              <div className="pl-6 pr-4">
+                <Globe className="w-5 h-5 text-gray-500" />
+              </div>
               <input
                 type="text"
-                placeholder="Firmenname"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full bg-slate-950 border border-white/5 py-6 pl-16 pr-6 rounded-3xl outline-none focus:border-red-500/50 transition-all text-lg font-medium"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://ihre-website.de"
+                className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-gray-600 py-4 text-lg"
               />
+              <button 
+                type="submit"
+                className="bg-[#e11d48] hover:bg-[#be123c] text-white px-8 py-4 rounded-full font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-[#e11d48]/20"
+              >
+                Audit Starten <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
-            <div className="flex-1 relative">
-              <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Standort (Stadt oder PLZ)"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full bg-slate-950 border border-white/5 py-6 pl-16 pr-6 rounded-3xl outline-none focus:border-red-500/50 transition-all text-lg font-medium"
-              />
-            </div>
-            <motion.button
-              type="submit"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-[#e11d48] px-10 py-6 rounded-3xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg shadow-red-500/40 relative group overflow-hidden"
-              disabled={isSearching}
-            >
-              <Shield className="w-5 h-5" />
-              {isSearching ? 'Analysiere...' : 'Audit jetzt starten'}
-            </motion.button>
           </form>
-        </motion.div>
+        </div>
 
-        {/* Trust Stats */}
-        <div className="mt-16 flex flex-wrap justify-center gap-12 opacity-50 grayscale hover:grayscale-0 transition-all duration-700">
-          <div className="flex items-center gap-2 font-bold text-sm uppercase tracking-widest">
-            <Cpu size={18} className="text-[#e11d48]" /> KI-Modell v4.2 aktiv
+        {/* Feature Grid */}
+        <div id="features" className="grid md:grid-cols-3 gap-6 mt-32">
+          <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:border-[#e11d48]/30 transition-all group">
+            <div className="w-12 h-12 rounded-2xl bg-[#e11d48]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Lock className="w-6 h-6 text-[#e11d48]" />
+            </div>
+            <h3 className="text-xl font-bold mb-3">Core Privacy</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Vollständige Analyse der Datenabfluss-Vektoren und DSGVO-Konformität Ihrer KI-Schnittstellen.
+            </p>
           </div>
-          <div className="flex items-center gap-2 font-bold text-sm uppercase tracking-widest">
-            <Globe size={18} className="text-blue-500" /> Google Maps API verbunden
+
+          <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:border-[#e11d48]/30 transition-all group">
+            <div className="w-12 h-12 rounded-2xl bg-[#e11d48]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <BarChart3 className="w-6 h-6 text-[#e11d48]" />
+            </div>
+            <h3 className="text-xl font-bold mb-3">Bias Detection</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Identifikation von algorithmischen Verzerrungen und unethischen Entscheidungsmustern.
+            </p>
           </div>
-          <div className="flex items-center gap-2 font-bold text-sm uppercase tracking-widest">
-            <CheckCircle size={18} className="text-emerald-500" /> DSGVO Konform
+
+          <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:border-[#e11d48]/30 transition-all group">
+            <div className="w-12 h-12 rounded-2xl bg-[#e11d48]/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <Cpu className="w-6 h-6 text-[#e11d48]" />
+            </div>
+            <h3 className="text-xl font-bold mb-3">Rapid Response</h3>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Automatisierte Berichterstellung und Handlungsempfehlungen für Ihre IT-Infrastruktur.
+            </p>
           </div>
         </div>
       </main>
+
+      <footer className="relative z-10 border-t border-white/5 py-12 mt-20">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="text-gray-500 text-sm font-mono">
+            &copy; 2026 OMNICORE SYSTEME. ALL RIGHTS RESERVED.
+          </div>
+          <div className="flex items-center gap-8 text-xs font-bold uppercase tracking-widest text-gray-400">
+            <a href="#" className="hover:text-[#e11d48] transition-colors">Impressum</a>
+            <a href="#" className="hover:text-[#e11d48] transition-colors">Datenschutz</a>
+            <a href="#" className="hover:text-[#e11d48] transition-colors">API Docs</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

@@ -1,12 +1,24 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 export default defineConfig({
+  // 1. Sagt Vite, dass die index.html im Root liegt
+  root: './', 
   plugins: [react()],
-  // Wir brauchen kein 'root: frontend' mehr, da die index.html im Root liegt.
-  // Vite findet den Rest über den Pfad in der index.html
+  resolve: {
+    alias: {
+      // 2. Fix für die roten Fehler: Mappt @ direkt auf deinen Ordner
+      '@': path.resolve(__dirname, './frontend/src'),
+    },
+  },
   build: {
+    // 3. Wichtig für Vercel: Alles landet im dist Ordner im Hauptverzeichnis
     outDir: 'dist',
-    emptyOutDir: true
-  }
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+      },
+    },
+  },
 })

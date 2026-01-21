@@ -6,12 +6,12 @@
       "destination": "api/main.py"
     },
     {
-      "source": "/(.*)",
-      "destination": "/"
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ],
   "functions": {
-    "api/*.py": {
+    "api/main.py": {
       "runtime": "vercel-python@4.4.4"
     }
   }
