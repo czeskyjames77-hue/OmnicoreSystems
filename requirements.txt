@@ -1,1 +1,6 @@
-
+fastapi
+uvicorn
+google-search-results
+pydantic
+sqlalchemy
+psycopg2-binary
