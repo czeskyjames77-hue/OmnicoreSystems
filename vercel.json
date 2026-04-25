@@ -1,23 +1,10 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/main.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build"
-    }
-  ],
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "cd training-planner && npm install",
+  "buildCommand": "cd training-planner && VITE_DEMO_MODE=true npm run build",
+  "outputDirectory": "training-planner/dist",
+  "framework": null,
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "api/main.py"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/"
-    }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
