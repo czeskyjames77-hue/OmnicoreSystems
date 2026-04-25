@@ -11,7 +11,7 @@ export default function TrainingsPage() {
   async function load() {
     setLoading(true)
     try {
-      setItems(await api.get<Training[]>('/api/trainings'))
+      setItems(await api.listTrainings())
     } finally {
       setLoading(false)
     }
@@ -82,7 +82,7 @@ function TrainingForm({ onClose, onSaved }: { onClose: () => void; onSaved: () =
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    await api.post('/api/trainings', {
+    await api.createTraining({
       scheduled_at: new Date(date).toISOString(),
       location: location || null,
       duration_minutes: duration,

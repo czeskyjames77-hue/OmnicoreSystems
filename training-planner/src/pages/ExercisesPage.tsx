@@ -9,8 +9,8 @@ export default function ExercisesPage() {
 
   async function load() {
     const [e, c] = await Promise.all([
-      api.get<Exercise[]>('/api/exercises'),
-      api.get<SkillCategory[]>('/api/skill-categories'),
+      api.listExercises(),
+      api.listSkillCategories(),
     ])
     setItems(e)
     setCategories(c)
@@ -92,10 +92,11 @@ function ExerciseForm({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    await api.post('/api/exercises', {
+    await api.createExercise({
+      id: '',
       name, description, min_players: minP, max_players: maxP,
       duration_minutes: duration, intensity,
-      skill_tags: Object.entries(tags).map(([category_id, weight]) => ({ category_id, weight })),
+      skill_tags: Object.keys(tags),
     })
     onSaved()
   }

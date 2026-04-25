@@ -12,7 +12,7 @@ export default function TrainingDetailPage() {
 
   async function loadAttendance() {
     if (!id) return
-    setAttendance(await api.get<AttendanceEntry[]>(`/api/trainings/${id}/attendance`))
+    setAttendance(await api.getAttendance(id))
   }
 
   useEffect(() => {
@@ -21,23 +21,20 @@ export default function TrainingDetailPage() {
 
   async function setStatus(playerId: string, status: AttendanceEntry['status']) {
     if (!id) return
-    await api.post(`/api/trainings/${id}/attendance`, { player_id: playerId, status })
+    await api.setAttendance(id, playerId, status)
     await loadAttendance()
   }
 
   async function generatePlan() {
     if (!id) return
-    setPlan(await api.get<SuggestedPlan>(`/api/trainings/${id}/suggested-plan`))
+    setPlan(await api.suggestedPlan(id))
   }
 
   async function applySkills() {
     if (!id) return
     setApplying(true)
     try {
-      const res = await api.post<{ status: string; updates: number }>(
-        `/api/trainings/${id}/apply-skills`,
-        {},
-      )
+      const res = await api.applySkills(id)
       setAppliedResult(`${res.status} – ${res.updates ?? 0} Skill-Updates`)
     } finally {
       setApplying(false)

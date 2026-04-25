@@ -12,8 +12,8 @@ export default function PlayersPage() {
     setLoading(true)
     try {
       const [p, c] = await Promise.all([
-        api.get<Player[]>('/api/players'),
-        api.get<SkillCategory[]>('/api/skill-categories'),
+        api.listPlayers(),
+        api.listSkillCategories(),
       ])
       setPlayers(p)
       setCategories(c)
@@ -124,7 +124,7 @@ function PlayerForm({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
     e.preventDefault()
     setSaving(true)
     try {
-      await api.post('/api/players', {
+      await api.createPlayer({
         first_name: firstName,
         last_name: lastName,
         position,

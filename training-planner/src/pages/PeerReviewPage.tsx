@@ -20,9 +20,9 @@ export default function PeerReviewPage() {
 
   useEffect(() => {
     Promise.all([
-      api.get<Window | null>('/api/peer-reviews/active'),
-      api.get<Player[]>('/api/players'),
-      api.get<SkillCategory[]>('/api/skill-categories'),
+      api.activeReviewWindow(),
+      api.listPlayers(),
+      api.listSkillCategories(),
     ])
       .then(([w, p, c]) => {
         setWindow(w)
@@ -37,7 +37,7 @@ export default function PeerReviewPage() {
     for (const cat of categories) {
       const value = ratings[cat.id]
       if (typeof value !== 'number') continue
-      await api.post('/api/peer-reviews', {
+      await api.submitReview({
         rater_id: raterId,
         ratee_id: rateeId,
         category_id: cat.id,

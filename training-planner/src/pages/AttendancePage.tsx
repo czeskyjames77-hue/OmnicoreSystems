@@ -7,7 +7,7 @@ export default function AttendancePage() {
 
   useEffect(() => {
     api
-      .get<Training[]>('/api/trainings')
+      .listTrainings()
       .then((list) => {
         const upcoming = list
           .filter((t) => new Date(t.scheduled_at) >= new Date(Date.now() - 1000 * 60 * 60 * 4))
