@@ -4,9 +4,9 @@ import path from 'node:path'
 
 export default defineConfig({
   plugins: [react()],
-  // Beim Pages-Build über GitHub Actions wird BASE_PATH gesetzt (z.B. "/OmnicoreSystems/").
-  // Lokal/Vercel fällt es auf "/" zurück.
-  base: process.env.BASE_PATH || '/',
+  // Relative Asset-Pfade — funktioniert auf GitHub Pages unabhängig von der
+  // Repo-Casing in der URL. HashRouter macht das unproblematisch.
+  base: process.env.BASE_PATH || './',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
