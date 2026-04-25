@@ -6,7 +6,7 @@ import type {
   AttendanceEntry, Exercise, Player, SkillCategory, SuggestedPlan, Training,
 } from './api'
 
-const STORAGE_KEY = 'msv-zossen-demo-v1'
+const STORAGE_KEY = 'msv-zossen-demo-v2'
 
 export const SKILL_CATEGORIES: SkillCategory[] = [
   { id: 'passspiel',         name: 'Passspiel',         description: 'Genauigkeit und Vision beim Pass' },
@@ -32,7 +32,7 @@ function rand(min: number, max: number) {
   return Math.round((Math.random() * (max - min) + min) * 100) / 100
 }
 
-function makePlayer(first: string, last: string, pos: Player['position'], jersey: number): Player {
+function makePlayer(first: string, last: string, pos: Player['position'] = null, jersey: number | null = null): Player {
   const skills: Record<string, number> = {}
   for (const id of ALL_SKILL_IDS) skills[id] = rand(3.5, 8.0)
   return {
@@ -43,20 +43,39 @@ function makePlayer(first: string, last: string, pos: Player['position'], jersey
   }
 }
 
+// MSV Zossen Kader (aus Spielerplus übernommen, 27 Spieler)
+const ROSTER: Array<[string, string]> = [
+  ['Billel', 'Loucif'],
+  ['Daniel', 'Hoffmann'],
+  ['David', 'Schulz'],
+  ['Denis', 'Memetovic'],
+  ['Felix', 'Freiberg'],
+  ['Florian', 'Kozik'],
+  ['Florian', 'Seifert-Danicek'],
+  ['James', 'Czesky'],
+  ['Jeann', 'Jokiel'],
+  ['Justin', 'Schulz'],
+  ['Krystian', 'Pastwa'],
+  ['Leon', 'Janitschke'],
+  ['Louis', 'Creutzburg'],
+  ['Malte', 'Jochim'],
+  ['Marcel', 'Hampe'],
+  ['Mohammad', 'Nowruzi'],
+  ['Muharrem', 'Cacan'],
+  ['Nick', 'Hamm'],
+  ['Nico', 'Hein'],
+  ['Niklas', 'Hannemann'],
+  ['Pascal', 'Knop'],
+  ['Philipp', 'Rülicke'],
+  ['Raven', 'Weißberg'],
+  ['Steve', ''],
+  ['Steven', 'Knape'],
+  ['Tobias', 'Dallüge'],
+  ['Willi', 'Filipp'],
+]
+
 function seed(): DemoState {
-  const players = [
-    makePlayer('Max', 'Becker', 'GK', 1),
-    makePlayer('Tim', 'Krüger', 'DEF', 2),
-    makePlayer('Lukas', 'Schmidt', 'DEF', 4),
-    makePlayer('Niklas', 'Wagner', 'DEF', 5),
-    makePlayer('Jonas', 'Klein', 'DEF', 3),
-    makePlayer('Felix', 'Müller', 'MID', 6),
-    makePlayer('David', 'Schulz', 'MID', 8),
-    makePlayer('Tobias', 'Hoffmann', 'MID', 10),
-    makePlayer('Marco', 'Weber', 'ATT', 7),
-    makePlayer('Kevin', 'Bauer', 'ATT', 9),
-    makePlayer('Patrick', 'Richter', 'ATT', 11),
-  ]
+  const players = ROSTER.map(([first, last]) => makePlayer(first, last))
   const exercises: Exercise[] = [
     {
       id: crypto.randomUUID(),
